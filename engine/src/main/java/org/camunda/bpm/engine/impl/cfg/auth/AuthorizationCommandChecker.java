@@ -489,6 +489,10 @@ public class AuthorizationCommandChecker implements CommandChecker {
     getAuthorizationManager().checkAuthorization(READ_HISTORY, PROCESS_DEFINITION, ANY);
   }
 
+  public void checkReadHistoryProcessDefinitionById(String processDefinitionId) {
+    getAuthorizationManager().checkAuthorization(READ_HISTORY, PROCESS_DEFINITION, processDefinitionId);
+  }
+
   public void checkReadHistoryAnyTaskInstance() {
     getAuthorizationManager().checkAuthorization(READ_HISTORY, TASK, ANY);
   }

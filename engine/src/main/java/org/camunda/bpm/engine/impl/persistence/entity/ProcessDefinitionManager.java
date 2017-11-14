@@ -169,6 +169,10 @@ public class ProcessDefinitionManager extends AbstractManager implements Abstrac
     return getDbEntityManager().selectList("selectProcessDefinitions", parameters);
   }
 
+  public List<ProcessDefinition> findDefinitionsByKey(String processDefinitionKey) {
+    return findDefinitionsByKeyAndTenantId(processDefinitionKey, null, false);
+  }
+
   @SuppressWarnings("unchecked")
   public List<ProcessDefinition> findDefinitionsByIds(List<String> processDefinitionIds) {
     Map<String, Object> parameters = new HashMap<String, Object>();

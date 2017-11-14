@@ -267,6 +267,11 @@ public interface CommandChecker {
   void checkReadHistoryAnyProcessDefinition();
 
   /**
+   * Check if it is allowed to read the history of the given process definition.
+   */
+  void checkReadHistoryProcessDefinitionById(String processDefinitionId);
+
+  /**
    * Check if it is allowed to read the history for any task instance
    */
   void checkReadHistoryAnyTaskInstance();

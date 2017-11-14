@@ -15,10 +15,13 @@ package org.camunda.bpm.engine.impl;
 import static org.camunda.bpm.engine.impl.util.CompareUtil.areNotInAscendingOrder;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.camunda.bpm.engine.AuthorizationException;
+import org.camunda.bpm.engine.authorization.MissingAuthorization;
 import org.camunda.bpm.engine.exception.NotValidException;
 import org.camunda.bpm.engine.history.DurationReportResult;
 import org.camunda.bpm.engine.history.HistoricProcessInstanceReport;
@@ -28,7 +31,9 @@ import org.camunda.bpm.engine.impl.db.TenantCheck;
 import org.camunda.bpm.engine.impl.interceptor.Command;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
+import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionManager;
 import org.camunda.bpm.engine.query.PeriodUnit;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 
 /**
  * @author Roman Smirnov
@@ -121,7 +126,38 @@ public class HistoricProcessInstanceReportImpl implements HistoricProcessInstanc
     // since a report does only make sense in context of historic
     // data, the authorization check will be performed here
     for(CommandChecker checker : commandContext.getProcessEngineConfiguration().getCommandCheckers()) {
-      checker.checkReadHistoryAnyProcessDefinition();
+      if (processDefinitionIdIn == null && processDefinitionKeyIn == null) {
+        checker.checkReadHistoryAnyProcessDefinition();
+      } else {
+        if (processDefinitionIdIn != null) {
+          for (String processDefinitionId : processDefinitionIdIn) {
+            checker.checkReadHistoryProcessDefinitionById(processDefinitionId);
+          }
+        }
+
+        if (processDefinitionKeyIn != null) {
+          for (String processDefinitionKey : processDefinitionKeyIn) {
+            ProcessDefinitionManager processDefinitionManager = commandContext.getProcessDefinitionManager();
+            List<ProcessDefinition> processDefinitions = processDefinitionManager.findDefinitionsByKey(processDefinitionKey);
+             for (ProcessDefinition processDefinition : processDefinitions) {
+               String processDefinitionId = processDefinition.getId();
+               try {
+                 checker.checkReadHistoryProcessDefinitionById(processDefinitionId);
+               } catch (AuthorizationException e) { // rethrow exception to hide the process definition id
+                 List<MissingAuthorization> missingAuthorizationsWithoutResourceId = new ArrayList<MissingAuthorization>();
+                 for (MissingAuthorization missingAuthorization : e.getMissingAuthorizations()) {
+                   String permissionName = missingAuthorization.getViolatedPermissionName();
+                   String resourceType = missingAuthorization.getResourceType();
+                   MissingAuthorization missingAuthorizationWithoutResourceId = new MissingAuthorization(permissionName, resourceType, null);
+                   missingAuthorizationsWithoutResourceId.add(missingAuthorizationWithoutResourceId);
+                 }
+
+                 throw new AuthorizationException(e.getUserId(), missingAuthorizationsWithoutResourceId);
+               }
+            }
+          }
+        }
+      }
     }
   }
 
