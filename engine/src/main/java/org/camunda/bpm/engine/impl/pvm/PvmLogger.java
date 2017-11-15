@@ -31,7 +31,7 @@ public class PvmLogger extends ProcessEngineLogger {
 
   public void debugExecutesActivity(PvmExecutionImpl execution, ActivityImpl activity, String name) {
     logDebug(
-        "002", "{} executed activity {}: {}", execution, activity, name);
+        "002", "{} executing activity {}: {}", execution, activity, name);
   }
 
   public void debugLeavesActivityInstance(PvmExecutionImpl execution, String activityInstanceId) {
